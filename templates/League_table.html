@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}League Table{% endblock %}
+
+{% block content %}
+<h1>{{ leagues[selected_league] }} League Table</h1>
+
+<!-- League Selection Dropdown -->
+<form method="get" action="{{ url_for('league_table') }}">
+    <label for="league">Select League:</label>
+    <select name="league" id="league" onchange="this.form.submit()">
+        {% for code, name in leagues.items() %}
+            <option value="{{ code }}" {% if code == selected_league %} selected {% endif %}>{{ name }}</option>
+        {% endfor %}
+    </select>
+</form>
+
+<!-- Main League Table -->
+<table class="table table-striped table-bordered mt-4">
+    <thead class="table-dark">
+        <tr>
+            <th>Position</th>
+            <th>Team</th>
+            <th>Played</th>
+            <th>Won</th>
+            <th>Draw</th>
+            <th>Lost</th>
+            <th>Goals For</th>
+            <th>Goals Against</th>
+            <th>Goal Difference</th>
+            <th>Points</th>
+            <th>Squad</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for team in standings %}
+        <tr>
+            <td>{{ team.position }}</td>
+            <td>
+                <img src="{{ team.crest }}" alt="Team Logo" style="width: 20px; height: 20px;">
+                {{ team.name }}
+            </td>
+            <td>{{ team.played }}</td>
+            <td>{{ team.won }}</td>
+            <td>{{ team.draw }}</td>
+            <td>{{ team.lost }}</td>
+            <td>{{ team.goals_for }}</td>
+            <td>{{ team.goals_against }}</td>
+            <td>{{ team.goal_difference }}</td>
+            <td>{{ team.points }}</td>
+            <td>
+                <a href="{{ url_for('team_squad', team_id=team.team_id) }}">
+                    {{ team.name }}
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

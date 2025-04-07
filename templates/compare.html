@@ -1,0 +1,509 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4 text-center">Player Comparison</h2>
+
+    <div class="page-hint">
+    Welcome! Search and select two footballers to compare their stats side-by-side.
+    </div>
+
+
+    <div class="row">
+        <!-- Left Player Search -->
+        <div class="col-md-6">
+            <input type="text" id="leftSearch" class="form-control mb-2" placeholder="Search left player..." onkeydown="handleKey(event, 'left')">
+            <div id="leftResults" class="row g-2"></div>
+        </div>
+
+        <!-- Right Player Search -->
+        <div class="col-md-6">
+            <input type="text" id="rightSearch" class="form-control mb-2" placeholder="Search right player..." onkeydown="handleKey(event, 'right')">
+            <div id="rightResults" class="row g-2"></div>
+        </div>
+    </div>
+
+    <!-- Player Summary Cards -->
+    <div id="summaryCards" class="row mt-4 text-center" style="display: none;">
+        <div class="col-md-6" id="leftSummary"></div>
+        <div class="col-md-6" id="rightSummary"></div>
+    </div>
+
+    <!-- Tabs -->
+    <div id="tabs" class="mt-5" style="display: none;">
+        <ul class="nav nav-tabs justify-content-center" id="comparisonTabs" role="tablist">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#overview">Overview</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#attacking">Attacking</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#defensive">Defensive</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#discipline_dribbling">Discipline / Dribbling</a></li>
+        </ul>
+
+
+        <div class="tab-content p-3 border bg-dark mt-2">
+            <!-- Overview tab -->
+            <div id="overview" class="tab-pane fade show active">
+                <h5 class="text-center">Overview</h5>
+                <div id="overviewStats"></div>
+                <canvas id="efficiencyChart" height="140" style="display: none;"></canvas>
+                <small class="text-muted d-block text-center">Passes/Dribbles per minute = total ÷ minutes played</small>
+                <canvas id="passChart" height="140" style="display: none;"></canvas>
+                <small class="text-muted d-block text-center">Passes per 90 = total ÷ (minutes ÷ 90)</small>
+
+            </div>
+
+            <!-- Attacking Tab -->
+            <div id="attacking" class="tab-pane fade">
+                <h5 class="text-center">Attacking Stats </h5>
+                <div id="attackingStats"></div>
+                <canvas id="attackingChart" height="140" style="display: none;"></canvas>
+                <small class="text-muted d-block text-center">Finishing stats are shown as percentages</small>
+                <canvas id="attackingChart2" height="140" style="display: none;"></canvas>
+                <small class="text-muted d-block text-center">Contributions per 90 = (goals + assists) ÷ (minutes ÷ 90)</small>
+            </div>
+
+            <!-- Defensive tab -->
+            <div id="defensive" class="tab-pane fade">
+                <h5 class="text-center">Defensive Stats</h5>
+                <div id="defensiveStats"></div>
+                <canvas id="defensiveChart" height="250" style="display: none;"></canvas>
+                <small class="text-muted d-block text-center">Radar chart shows raw totals: tackles, interceptions, blocks, fouls committed.</small>
+            </div>
+
+            <!-- Discipline / Dribbling tab -->
+            <div id="discipline_dribbling" class="tab-pane fade">
+                <h5 class="text-center">Discipline / Dribbling</h5>
+                <div id="discipline_dribblingStats"></div>
+                <canvas id="discipline_dribblingChart" height="200" style="display: none;"></canvas>
+                <canvas id="discipline_dribblingChart2" height="140" style="display: none;"></canvas>
+                <small class="text-muted d-block text-center">Cards & Fouls are per match</small>
+                <small class="text-muted d-block text-center">Dribble Success is a percentage</small>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedPlayers = { left: null, right: null };
+let playerStats = { left: null, right: null };
+
+function handleKey(e, side) {
+    if (e.key === "Enter") searchPlayer(e.target.value.trim(), side);
+}
+
+function searchPlayer(query, side) {
+    const resultsDiv = document.getElementById(`${side}Results`);
+    resultsDiv.innerHTML = `<p>Loading...</p>`;
+
+    fetch(`/search_player?player=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+            resultsDiv.innerHTML = "";
+            if (!data.players || data.players.length === 0) {
+                resultsDiv.innerHTML = "<p>No players found.</p>";
+                return;
+            }
+            data.players.forEach(player => {
+                const card = document.createElement("div");
+                card.className = "col-md-6";
+                card.innerHTML = `
+    <div class="card player-card text-center p-2" onclick="selectPlayer(${player.id}, '${side}', '${player.name}')">
+        <img src="${player.photo}" class="rounded-circle mx-auto" style="width: 70px; height: 70px;">
+        <h6 class="mt-2">${player.name}</h6>
+        <p class="mb-1"><strong>${player.position}</strong> • Age: ${player.age}</p>
+        <p class="mb-0">${player.nationality}</p>
+        <img src="${player.team_logo}" alt="Club Logo" style="width: 22px; height: 22px;">
+    </div>
+`;
+
+                resultsDiv.appendChild(card);
+            });
+        })
+        .catch(() => {
+            resultsDiv.innerHTML = "<p>Error loading data.</p>";
+        });
+}
+
+function selectPlayer(id, side, name) {
+    selectedPlayers[side] = id;
+    const resultsDiv = document.getElementById(`${side}Results`);
+    resultsDiv.innerHTML = `<p class="text-success">✔ Selected: <strong>${name}</strong></p>`;
+
+    fetch(`/api/player_stats/${id}`)
+        .then(res => res.json())
+        .then(data => {
+            playerStats[side] = data;
+            checkReady();
+        });
+}
+
+function checkReady() {
+    if (playerStats.left && playerStats.right) {
+        document.getElementById("tabs").style.display = "block";
+        document.getElementById("summaryCards").style.display = "flex";
+
+        renderPlayerCard("left");
+        renderPlayerCard("right");
+
+        // Render all stat tables
+        ["overview", "attacking", "defensive", "discipline_dribbling"].forEach(tab => {
+            renderStats(tab);
+        });
+
+        // Render chart for default active tab (overview)
+        renderDerivedChart("overview");
+    }
+}
+
+function renderPlayerCard(side) {
+    const p = playerStats[side];
+    const cardDiv = document.getElementById(`${side}Summary`);
+    cardDiv.innerHTML = `
+        <div class="card p-3">
+            <p><strong>Position:</strong> ${p.position} • Age: ${p.age}</p>
+            <p><strong>Nationality:</strong> <img src="${p.nationality_flag}" style="width: 22px; height: 16px;"> ${p.nationality}</p>
+            <p><strong>Club:</strong> <img src="${p.team_logo}" style="width: 22px;"> ${p.team}</p>
+        </div>
+    `;
+}
+
+function renderStats(type) {
+    const l = playerStats.left;
+    const r = playerStats.right;
+
+    const label = {
+    overview: ["minutes", "rating", "passes"],
+    attacking: ["goals", "assists", "shots", "shots_on_target", "shots_missed", "penalties_scored", "penalties_missed", "key_passes"],
+    defensive: ["tackles", "interceptions", "blocks"],
+    discipline_dribbling: ["fouls_committed", "fouls_drawn", "yellow_cards", "red_cards", "dribbles_attempts", "dribbles_success"]
+};
+
+
+    // ✅ Safety check
+    if (!label[type]) {
+        console.warn(`Unknown stat tab: ${type}`);
+        return;
+    }
+
+    console.log("Rendering tab:", type);
+    console.log("Stat keys:", label[type]);
+
+    let html = `
+        <div class="row text-center">
+            <div class="col-md-6"><strong>${l.name}</strong></div>
+            <div class="col-md-6"><strong>${r.name}</strong></div>
+        </div><hr>
+        <div class="row">
+    `;
+
+    label[type].forEach(stat => {
+        const lStat = (l && stat in l && l[stat] !== null && l[stat] !== undefined) ? l[stat] : 'N/A';
+        const rStat = (r && stat in r && r[stat] !== null && r[stat] !== undefined) ? r[stat] : 'N/A';
+
+        html += `
+    <div class="col-md-6 text-center">
+        <p class="stat-label"><strong>${stat.replace(/_/g, " ").toUpperCase()}</strong>: ${lStat}</p>
+    </div>
+    <div class="col-md-6 text-center">
+        <p class="stat-label"><strong>${stat.replace(/_/g, " ").toUpperCase()}</strong>: ${rStat}</p>
+    </div>
+`;
+
+    });
+
+    html += "</div>";
+
+    const container = document.getElementById(`${type}Stats`);
+    if (container) {
+        container.innerHTML = html;
+    } else {
+        console.warn(`Element #${type}Stats not found in DOM`);
+    }
+}
+
+let derivedChart = null;
+let secondChart = null;
+
+function renderDerivedChart(tab) {
+    const l = playerStats.left;
+    const r = playerStats.right;
+
+    // Hide all charts
+    document.querySelectorAll("canvas[id$='Chart']").forEach(c => c.style.display = "none");
+
+    // Clean up old charts
+    if (derivedChart) derivedChart.destroy();
+    if (secondChart) secondChart.destroy();
+
+    let labels = [], leftData = [], rightData = [], chartType = 'bar';
+
+    if (tab === "overview") {
+    // === Chart 1: Key Passes + Dribbles per 90 ===
+    const comboLabels = ["Key Passes per 90", "Dribbles per 90"];
+    const leftCombo = [
+        safeDivide(l.key_passes, l.minutes / 90),
+        safeDivide(l.dribbles_success, l.minutes / 90)
+    ];
+    const rightCombo = [
+        safeDivide(r.key_passes, r.minutes / 90),
+        safeDivide(r.dribbles_success, r.minutes / 90)
+    ];
+
+    const comboCanvas = document.getElementById("efficiencyChart");
+    comboCanvas.style.display = "block";
+    const comboCtx = comboCanvas.getContext("2d");
+
+    secondChart = new Chart(comboCtx, {
+        type: "bar",
+        data: {
+            labels: comboLabels,
+            datasets: [
+                { label: l.name, data: leftCombo, backgroundColor: 'rgba(54, 162, 235, 0.6)' },
+                { label: r.name, data: rightCombo, backgroundColor: 'rgba(76, 175, 80, 0.6)' }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            plugins: { legend: { position: 'top' } },
+            scales: { x: { beginAtZero: true } }
+        }
+    });
+
+    // === Chart 2: Passes per 90 ===
+    const passCanvas = document.getElementById("passChart");
+    passCanvas.style.display = "block";
+    const passCtx = passCanvas.getContext("2d");
+
+    new Chart(passCtx, {
+        type: "bar",
+        data: {
+            labels: ["Passes per 90"],
+            datasets: [
+                { label: l.name, data: [safeDivide(l.passes, l.minutes / 90)], backgroundColor: 'rgba(54, 162, 235, 0.6)' },
+                { label: r.name, data: [safeDivide(r.passes, r.minutes / 90)], backgroundColor: 'rgba(76, 175, 80, 0.6)' }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            plugins: { legend: { position: 'top' } },
+            scales: { x: { beginAtZero: true } }
+        }
+    });
+
+    return; // ✅ Skip rest
+}
+
+    // For other tabs
+    const chartCanvas = document.getElementById(`${tab}Chart`);
+    if (!chartCanvas) return;
+    chartCanvas.style.display = "block";
+    const ctx = chartCanvas.getContext("2d");
+
+    if (tab === "attacking") {
+    // === Chart 1: Finishing Accuracy ===
+    const finishLabels = ["Shot Accuracy %", "Goal Conversion %", "Penalty Accuracy %"];
+    const leftFinish = [
+        safePercent(l.shots_on_target, l.shots),
+        safePercent(l.goals, l.shots),
+        safePercent(l.penalties_scored, l.penalties_scored + l.penalties_missed)
+    ];
+    const rightFinish = [
+        safePercent(r.shots_on_target, r.shots),
+        safePercent(r.goals, r.shots),
+        safePercent(r.penalties_scored, r.penalties_scored + r.penalties_missed)
+    ];
+
+    const chartCanvas = document.getElementById(`${tab}Chart`);
+    chartCanvas.style.display = "block";
+    const ctx = chartCanvas.getContext("2d");
+
+    derivedChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: finishLabels,
+            datasets: [
+                { label: l.name, data: leftFinish, backgroundColor: 'rgba(54, 162, 235, 0.6)' },
+                { label: r.name, data: rightFinish, backgroundColor: 'rgba(76, 175, 80, 0.6)' }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+
+    // === Chart 2: Contributions per 90 ===
+    const assistCanvas = document.getElementById("attackingChart2");
+    assistCanvas.style.display = "block";
+    const ctx2 = assistCanvas.getContext("2d");
+
+    const labels2 = ["Contributions per 90"];
+    const leftStats = [safeDivide(l.goals + l.assists, l.minutes / 90)];
+    const rightStats = [safeDivide(r.goals + r.assists, r.minutes / 90)];
+
+    secondChart = new Chart(ctx2, {
+        type: "bar",
+        data: {
+            labels: labels2,
+            datasets: [
+                { label: l.name, data: leftStats, backgroundColor: 'rgba(54, 162, 235, 0.6)' },
+                { label: r.name, data: rightStats, backgroundColor: 'rgba(76, 175, 80, 0.6)' }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                x: { beginAtZero: true }
+            }
+        }
+    });
+
+    return;
+}
+
+    else if (tab === "defensive") {
+    labels = ["Tackles", "Interceptions", "Blocks", "Fouls Committed"];
+
+    leftData = [
+        l.tackles ?? 0,
+        l.interceptions ?? 0,
+        l.blocks ?? 0,
+        l.fouls_committed ?? 0
+    ];
+
+    rightData = [
+        r.tackles ?? 0,
+        r.interceptions ?? 0,
+        r.blocks ?? 0,
+        r.fouls_committed ?? 0
+    ];
+
+    chartType = "radar";
+}
+
+    else if (tab === "discipline_dribbling") {
+    // === Chart 1: Cards & Fouls per Match ===
+    labels = ["Cards per Match", "Fouls Drawn per Match"];
+    leftData = [
+        safeDivide(l.yellow_cards + l.red_cards, l.minutes / 90),
+        safeDivide(l.fouls_drawn, l.minutes / 90)
+    ];
+    rightData = [
+        safeDivide(r.yellow_cards + r.red_cards, r.minutes / 90),
+        safeDivide(r.fouls_drawn, r.minutes / 90)
+    ];
+
+    chartType = "bar";
+    const chartCanvas = document.getElementById(`${tab}Chart`);
+    chartCanvas.style.display = "block";
+    const ctx = chartCanvas.getContext("2d");
+
+    derivedChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [
+                { label: l.name, data: leftData, backgroundColor: 'rgba(54, 162, 235, 0.6)' },
+                { label: r.name, data: rightData, backgroundColor: 'rgba(76, 175, 80, 0.6)' }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                x: { beginAtZero: true, max: 2 }
+            }
+        }
+    });
+
+    // === Chart 2: Dribble Success ===
+    const canvas2 = document.getElementById("discipline_dribblingChart2");
+    canvas2.style.display = "block";
+    const ctx2 = canvas2.getContext("2d");
+
+    const dribbleLabels = ["Dribble Success %"];
+    const leftDrib = [safePercent(l.dribbles_success, l.dribbles_attempts)];
+    const rightDrib = [safePercent(r.dribbles_success, r.dribbles_attempts)];
+
+    secondChart = new Chart(ctx2, {
+        type: "bar",
+        data: {
+            labels: dribbleLabels,
+            datasets: [
+                { label: l.name, data: leftDrib, backgroundColor: 'rgba(54, 162, 235, 0.6)' },
+                { label: r.name, data: rightDrib, backgroundColor: 'rgba(76, 175, 80, 0.6)' }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                x: { beginAtZero: true, max: 100 }
+            }
+        }
+    });
+
+    return;
+}
+
+
+    derivedChart = new Chart(ctx, {
+    type: chartType,
+    data: {
+        labels: labels,
+        datasets: [
+            {
+                label: l.name,
+                data: leftData,
+                backgroundColor: chartType === 'radar' ? 'rgba(54, 162, 235, 0.4)' : 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                fill: true
+            },
+            {
+                label: r.name,
+                data: rightData,
+                backgroundColor: chartType === 'radar' ? 'rgba(255, 99, 132, 0.4)' : 'rgba(255, 99, 132, 0.6)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                fill: true
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'top' } },
+        scales: chartType === 'radar' ? {} : { x: { beginAtZero: true } }
+    }
+});
+
+}
+
+// Reusable helpers
+function safeDivide(a, b) {
+    return (a && b && b !== 0) ? Number((a / b).toFixed(2)) : "N/A";
+}
+
+function safePercent(a, b) {
+    return (a && b && b !== 0) ? Number(((a / b) * 100).toFixed(1)) : "N/A";
+}
+
+function roundVal(v) {
+    return (typeof v === "string" || typeof v === "number") ? Number(parseFloat(v).toFixed(1)) : "N/A";
+}
+
+document.querySelectorAll(".nav-link").forEach(link => {
+    link.addEventListener("click", (e) => {
+        const tabId = e.target.getAttribute("href").replace("#", "");
+        renderDerivedChart(tabId);
+    });
+});
+
+</script>
+
+{% endblock %}

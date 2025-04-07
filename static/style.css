@@ -1,0 +1,193 @@
+/* ==== General Theme ==== */
+body {
+    background-color: #121212;
+    color: #ffffff;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* ==== Navbar ==== */
+.navbar {
+    background-color: #1c1c1c;
+    border-bottom: 2px solid #1f7a1f;
+}
+.navbar-brand, .nav-link {
+    color: #f0f0f0 !important;
+}
+.nav-link:hover {
+    color: #1f7a1f !important;
+}
+
+/* ==== Tables ==== */
+.table {
+    background-color: #1e1e1e;
+    color: #fff;
+    border: 1px solid #333;
+}
+.table th {
+    background-color: #2d2d2d;
+    color: #1f7a1f;
+}
+.table td {
+    border: 1px solid #444;
+}
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #2a2a2a;
+}
+
+/* ==== Buttons ==== */
+.btn-outline-primary {
+    border-color: #1f7a1f;
+    color: #1f7a1f;
+}
+.btn-outline-primary:hover {
+    background-color: #1f7a1f;
+    color: #fff;
+}
+
+/* ==== Cards ==== */
+.card {
+    background-color: #1e1e1e;
+    border: 1px solid #2e2e2e;
+}
+
+/* ==== Dropdowns ==== */
+.form-select {
+    background-color: #2a2a2a;
+    color: #fff;
+    border: 1px solid #444;
+}
+.form-select:focus {
+    border-color: #1f7a1f;
+    box-shadow: 0 0 0 0.2rem rgba(31, 122, 31, 0.25);
+}
+
+/* ==== Charts ==== */
+canvas {
+    background-color: #1a1a1a;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+
+.card img.rounded-circle {
+    width: 70px !important;
+    height: 70px !important;
+}
+.card h5, .card p, .card small {
+    font-size: 0.95rem;
+    color: #f1f1f1;
+}
+.nav-tabs .nav-link {
+    font-size: 0.9rem;
+}
+.tab-content h5 {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #ffffff;
+}
+.tab-content small {
+    color: #cccccc !important;
+}
+
+.profile-photo {
+    width: 160px;
+    height: 160px;
+    object-fit: cover;
+    border: 3px solid #4CAF50;
+    box-shadow: 0 0 8px rgba(0,0,0,0.5);
+}
+
+.club-icon {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    vertical-align: middle;
+    margin-top: 5px;
+}
+
+
+/* ==== Profile Card Styling ==== */
+.profile-card {
+    background-color: #1e1e1e;
+    border-radius: 15px;
+    border: 2px solid #4CAF50;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+.nav-tabs {
+    margin-top: 20px;
+}
+.stat-box p {
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+}
+
+.nav-tabs .nav-link {
+    color: #aaa;
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    color: #4CAF50 !important;
+    font-weight: bold;
+    background-color: #121212;
+    border: 1px solid #4CAF50;
+    border-bottom: none;
+}
+
+.player-card {
+    background-color: #1f1f1f;
+    border: 1px solid #4CAF50;
+    border-radius: 12px;
+    padding: 12px;
+    color: #f1f1f1;
+    text-align: center;
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.2);
+    transition: transform 0.2s ease-in-out;
+}
+
+.player-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+
+.stat-label {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+
+.page-hint {
+    background-color: #2a2a2a;
+    border: 1px solid #4CAF50;
+    color: #ccc;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+.feature-block {
+    display: block;
+    background-color: #1a2e1a;
+    border: 2px solid #4CAF50;
+    padding: 30px;
+    text-align: center;
+    border-radius: 10px;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #ffffff;
+    text-decoration: none;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.feature-block:hover {
+    background-color: #2f4f2f;
+    transform: scale(1.03);
+    color: #4CAF50;
+}

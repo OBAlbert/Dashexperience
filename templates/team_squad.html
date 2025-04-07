@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>{{ team_info.name }}</h2>
+    <img src="{{ team_info.crest }}" alt="{{ team_info.name }} Logo" width="100">
+    <p><strong>Founded:</strong> {{ team_info.founded }}</p>
+    <p><strong>Stadium:</strong> {{ team_info.venue }}</p>
+
+    <h3>Squad List</h3>
+    {% if squad %}
+        <!-- Sorting Dropdown -->
+        <div class="mb-3">
+            <label for="sortOption" class="form-label text-light">Sort by:</label>
+            <select id="sortOption" class="form-select" style="width: 200px;" onchange="sortSquad()">
+                <option value="name">Alphabetical</option>
+                <option value="age">Age</option>
+                <option value="position">Position</option>
+            </select>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 2px solid #000;">
+                    <th style="padding: 10px; border-bottom: 1px solid #ddd;">Name</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #ddd;">Position</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #ddd;">Age</th>
+                    <th style="padding: 10px; border-bottom: 1px solid #ddd;">Nationality</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in squad %}
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 10px;">{{ player.name }}</td>
+                        <td style="padding: 10px;">{{ player.position }}</td>
+                        <td style="padding: 10px;">{{ player.age }}</td>
+                        <td style="padding: 10px;">{{ player.nationality }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No players found for this team.</p>
+    {% endif %}
+</div>
+
+<script>
+function sortSquad() {
+    const option = document.getElementById("sortOption").value;
+    const table = document.querySelector("table tbody");
+    const rows = Array.from(table.rows);
+
+    rows.sort((a, b) => {
+        const valA = a.querySelector(`td:nth-child(${option === "name" ? 1 : option === "position" ? 2 : 3})`).innerText;
+        const valB = b.querySelector(`td:nth-child(${option === "name" ? 1 : option === "position" ? 2 : 3})`).innerText;
+        if (option === "age") return parseInt(valA) - parseInt(valB);
+        return valA.localeCompare(valB);
+    });
+
+    table.innerHTML = "";
+    rows.forEach(row => table.appendChild(row));
+}
+
+</script>
+{% endblock %}

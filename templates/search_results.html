@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5">
+    <h3 class="mb-4">Search Results</h3>
+
+    {% if players %}
+    <!-- Grid layout for player cards -->
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+        {% for player in players %}
+        <div class="col">
+            <div class="card h-100 text-center p-3">
+                <!-- Player photo -->
+                <img src="{{ player.photo }}" alt="Player" class="rounded-circle mx-auto mb-2" style="width: 80px; height: 80px;">
+
+                <!-- Player name -->
+                <h5 class="card-title">{{ player.name }}</h5>
+
+                <!-- Player info -->
+                <p><strong>Position:</strong> {{ player.position }}</p>
+                <p><strong>Age:</strong> {{ player.age }}</p>
+
+                <!-- Nationality -->
+                <p>
+                    <strong>Nationality:</strong> {{ player.nationality }}
+                </p>
+
+                <!-- Club badge -->
+                <p>
+                    <img src="{{ player.team_logo }}" alt="Club Logo" style="width: 24px;">
+                </p>
+
+                <!-- Profile link -->
+                <a href="/player/{{ player.id }}" class="btn btn-outline-primary btn-sm">View Profile</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No players found.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

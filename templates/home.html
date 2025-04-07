@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5 text-center">
+    <h1 class="display-3 fw-bold mb-4" style="color: #4CAF50; font-family: 'Segoe UI', cursive;">
+        Dashexperience
+    </h1>
+
+    <div class="page-hint mb-5 p-4">
+        <p>
+            Welcome to <strong>Dashexperience</strong> — your all-in-one football analytics hub.
+            Explore in-depth player comparisons, top performers, team insights, and match stats using real-time data.
+        </p>
+        <p>
+            Use the tabs below to explore different features of the dashboard — compare players, analyze match performances, view league standings, discover under-the-radar talents. and keep up with the world of football
+        </p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        <div class="col-md-5">
+            <a href="/search" class="btn btn-outline-success btn-lg w-100 py-4 my-2 shadow feature-button">Search Players</a>
+        </div>
+        <div class="col-md-5">
+            <a href="/compare" class="btn btn-outline-success btn-lg w-100 py-4 my-2 shadow feature-button">Compare Players</a>
+        </div>
+        <div class="col-md-5">
+            <a href="/leaderboard" class="btn btn-outline-success btn-lg w-100 py-4 my-2 shadow feature-button">Leaderboard</a>
+        </div>
+        <div class="col-md-5">
+            <a href="/leagues" class="btn btn-outline-success btn-lg w-100 py-4 my-2 shadow feature-button">League Table</a>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

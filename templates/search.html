@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5">
+    <h3 class="mb-4">Search for a Player</h3>
+
+    <div class="page-hint">
+    Welcome! Enter a name to search for a player profile.
+    </div>
+
+
+    <!-- Search input with button -->
+    <div class="input-group mb-3">
+        <input type="text" id="searchInput" class="form-control" placeholder="Enter player name...">
+        <button onclick="searchPlayer()" class="btn btn-primary">Search</button>
+    </div>
+
+    <!-- Results will appear here -->
+    <div id="results" class="row g-4"></div>
+</div>
+
+
+<script>
+// Allow pressing Enter to trigger search
+document.getElementById("searchInput").addEventListener("keyup", function(e) {
+    if (e.key === "Enter") searchPlayer();
+});
+
+// Fetch and display player search results
+function searchPlayer() {
+    const input = document.getElementById("searchInput");
+    const query = input.value.trim();
+    const resultsDiv = document.getElementById("results");
+
+    if (!query) return;
+
+    resultsDiv.innerHTML = "<p>Loading...</p>";
+
+    fetch(`/search_player?player=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => {
+            resultsDiv.innerHTML = "";
+
+            // Show message if no players found
+            if (!data.players || data.players.length === 0) {
+                resultsDiv.innerHTML = "<p>No players found.</p>";
+                return;
+            }
+
+            // Render each player as a card
+            data.players.forEach(player => {
+                const card = document.createElement("div");
+                card.className = "col-md-4";
+                card.innerHTML = `
+                    <div class="card text-center p-3">
+                        <img src="${player.photo}" class="rounded-circle mx-auto" style="width: 100px; height: 100px;">
+                        <h5 class="mt-3">${player.name}</h5>
+                        <p><strong>Age:</strong> ${player.age}</p>
+                        <p><strong>Position:</strong> ${player.position}</p>
+                        <p>
+                            <strong>Nationality:</strong> ${player.nationality}
+                            ${player.flag ? `<img src="${player.flag}" style="height: 20px; vertical-align: middle;">` : ""}
+                        </p>
+                        <a href="/player/${player.id}" class="btn btn-outline-primary btn-sm mt-2">View Profile</a>
+                    </div>
+                `;
+                resultsDiv.appendChild(card);
+            });
+        })
+        .catch(() => {
+            resultsDiv.innerHTML = "<p>Error loading data.</p>";
+        });
+}
+</script>
+
+{% endblock %}
